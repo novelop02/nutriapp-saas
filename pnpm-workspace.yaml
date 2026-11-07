@@ -1,3 +1,5 @@
 packages:
-  - "nutriapp-backend"
-  - "shared"
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  esbuild: true
