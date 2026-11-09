@@ -1,7 +1,15 @@
-import { sql } from "drizzle-orm";
-import { APP_NAME } from "@nutriapp/shared";
+import { createApp } from "./app.js";
 import { env } from "./config/env.js";
-import { db } from "./db/client.js";
+import { pool } from "./db/client.js";
 
-const result = await db.execute(sql`select 1 as ok`);
-console.log(`Hola desde ${APP_NAME} desde el puerto ${env.PORT}. Base de datos:`, result.rows);
+const server = createApp().listen(env.PORT, () => {
+  console.log(`API esuchando en http://localhost:${env.PORT}`);
+});
+
+function shutdown() {
+  server.close(() => {
+    void pool.end().then(() => process.exit(0));
+  });
+}
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

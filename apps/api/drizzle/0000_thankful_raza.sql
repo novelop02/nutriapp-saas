@@ -1,4 +1,4 @@
-CREATE TYPE "public"."user_role" AS ENUM('nutricionist', 'patient', 'admin');--> statement-breakpoint
+CREATE TYPE "public"."user_role" AS ENUM('nutritionist', 'patient', 'admin');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" text NOT NULL,
