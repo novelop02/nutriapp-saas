@@ -9,7 +9,7 @@ function isUniqueViolation(err: unknown): boolean {
   return e?.code === "23505" || e?.cause?.code === "23505";
 }
 
-export async function registerNutricionist(input: RegisterInput): Promise<AuthUser> {
+export async function registerNutritionist(input: RegisterInput): Promise<AuthUser> {
   const passwordHash = await argon2.hash(input.password);
 
   try {
