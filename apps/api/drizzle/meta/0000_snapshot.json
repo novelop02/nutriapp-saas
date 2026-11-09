@@ -1,5 +1,5 @@
 {
-  "id": "4e770235-183f-445d-a446-58a93488d8b5",
+  "id": "7b724727-7dcc-4210-a928-b5c6c7cd15b4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -68,7 +68,7 @@
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": ["nutricionist", "patient", "admin"]
+      "values": ["nutritionist", "patient", "admin"]
     }
   },
   "schemas": {},
