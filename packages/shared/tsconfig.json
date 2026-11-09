@@ -3,5 +3,5 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": ["src", "../../apps/api/src/errors.ts", "../../apps/api/src/middleware"]
+  "include": ["src"]
 }
