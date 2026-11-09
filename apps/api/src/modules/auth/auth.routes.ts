@@ -1,12 +1,9 @@
 import { Router } from "express";
-import { authUserSchema, registerSchema, type RegisterInput } from "@nutriapp/shared";
+import { loginSchema, registerSchema } from "@nutriapp/shared";
 import { validate } from "../../middleware/validate.js";
-import { registerNutritionist } from "./auth.service.js";
+import { register, login } from "./auth.controller.js";
 
 export const authRouter = Router();
 
-authRouter.post("/register", validate(registerSchema), async (req, res) => {
-  const input: RegisterInput = req.body;
-  const user = await registerNutritionist(input);
-  res.status(201).json({ user: authUserSchema.parse(user) });
-});
+authRouter.post("/register", validate(registerSchema), register);
+authRouter.post("/login", validate(loginSchema), login);
