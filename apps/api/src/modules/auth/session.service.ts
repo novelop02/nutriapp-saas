@@ -6,6 +6,7 @@ import { db } from "../../db/client.js";
 import { refreshTokens, users } from "../../db/schema.js";
 import { AppError } from "../../errors.js";
 import { generateRefreshToken, hashRefreshToken } from "../../lib/refresh-token.js";
+import { logger } from "../../lib/logger.js";
 
 export type SessionMeta = { userAgent: string | null; ip: string | null };
 
@@ -94,7 +95,10 @@ export async function rotateSession(
 
   // Throw AFTER the transaction: throwing inside it would roll back the family revocation
   if (result.status === "reuse") {
-    console.warn("Refresh token reuse detected, family revoked: ", result.familyId);
+    logger.warn(
+      { event: "refresh_token_reuse", familyId: result.familyId },
+      "Refresh token reuse detected, family revoked",
+    );
     throw invalidRefreshError();
   }
   if (result.status === "invalid") throw invalidRefreshError();

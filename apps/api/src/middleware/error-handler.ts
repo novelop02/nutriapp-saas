@@ -16,7 +16,7 @@ export const notFoundHandler: RequestHandler = (_req, res) => {
   res.status(404).json({ error: { code: "not_found", message: "Route not found" } });
 };
 
-export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (err instanceof AppError) {
     res.status(err.status).json({
       error: { code: err.code, message: err.message, details: err.details },
@@ -29,6 +29,6 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return;
   }
 
-  console.error(err);
+  req.log.error({ err, thrownNonError: !(err instanceof Error) }, "Unhandled error");
   res.status(500).json({ error: { code: "internal_error", message: "Internal error" } });
 };
