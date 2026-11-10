@@ -4,6 +4,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../../app.js";
 import { db, pool } from "../../db/client.js";
 import { users } from "../../db/schema.js";
+import { findCookie } from "../../../test/helpers.js";
 
 const app = createApp();
 const validBody = { email: "ana@example.com", password: "safe-password-123" };
@@ -21,6 +22,14 @@ async function countUsers() {
 }
 
 describe("POST /auth/register", () => {
+  it("starts a session: sets the access and refresh cookies", async () => {
+    const res = await request(app).post("/auth/register").send(validBody);
+
+    expect(res.status).toBe(201);
+    expect(findCookie(res, "access_token")).toContain("HttpOnly");
+    expect(findCookie(res, "refresh_token")).toContain("HttpOnly");
+  });
+
   it("creates a nutritionist and returns 201 without sensitive data", async () => {
     const res = await request(app)
       .post("/auth/register")
