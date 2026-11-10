@@ -9,6 +9,7 @@ import { AppError } from "../../errors.js";
 import { clearAuthCookies, REFRESH_COOKIE, setAuthCookies } from "../../lib/cookies.js";
 import { signAccessToken } from "../../lib/tokens.js";
 import { authenticate, getAuthUserById, registerNutritionist } from "./auth.service.js";
+import { actorFrom } from "../../policies/actor.js";
 import {
   createSession,
   invalidRefreshError,
@@ -75,18 +76,18 @@ export async function logout(req: Request, res: Response) {
 }
 
 export async function logoutAll(req: Request, res: Response) {
-  if (!req.auth) throw new AppError(401, "unauthenticated", "Authentication required");
-  await revokeAllUserSessions(req.auth.userId);
+  const actor = actorFrom(req);
+  await revokeAllUserSessions(actor.userId);
 
   clearAuthCookies(res);
   res.status(204).end();
 }
 
 export async function me(req: Request, res: Response) {
-  if (!req.auth) throw new AppError(401, "unauthenticated", "Authentication required");
+  const actor = actorFrom(req);
 
   // Se consulta la base de datos: un token valido de un usuario ya borrado no debe servir
-  const user = await getAuthUserById(req.auth.userId);
+  const user = await getAuthUserById(actor.userId);
   if (!user) throw new AppError(401, "unauthenticated", "Authentication required");
 
   res.set("Cache-Control", "no-store");
