@@ -12,6 +12,23 @@ const envSchema = z.object({
     .positive()
     .default(60 * 60 * 24 * 30),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  ALLOWED_ORIGINS: z
+    .string()
+    .default("")
+    .transform((value) =>
+      value
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    )
+    .pipe(
+      z
+        .array(z.url())
+        .refine(
+          (origins) => origins.every((origin) => new URL(origin).origin === origin),
+          "each origin must look like https://host[:port], without a path or trailing slash",
+        ),
+    ),
 });
 
 const parsed = envSchema.safeParse(process.env);
