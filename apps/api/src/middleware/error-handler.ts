@@ -25,7 +25,13 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   }
 
   if (hasClientStatus(err)) {
-    res.status(err.status).json({ error: { code: "bad_request", message: "Bad request" } });
+    const tooLarge = err.status === 413;
+    res.status(err.status).json({
+      error: {
+        code: tooLarge ? "payload_too_large" : "bad_request",
+        message: tooLarge ? "Payload too large" : "Bad request",
+      },
+    });
     return;
   }
 

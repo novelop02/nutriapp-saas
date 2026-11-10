@@ -3,9 +3,11 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import type { Logger } from "pino";
 import { pinoHttp } from "pino-http";
+import { env } from "./config/env.js";
 import { logger } from "./lib/logger.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { requireAuth } from "./middleware/require-auth.js";
+import { corsPolicy, originGuard, securityHeaders } from "./middleware/security.js";
 import { me } from "./modules/auth/auth.controller.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 
@@ -14,7 +16,7 @@ export function createApp(log: Logger = logger) {
   const app = express();
   app.disable("x-powered-by");
 
-  // First middleware: every later error already has req.log and a request id
+  // First: every later middleware and error already has req.log and a request id
   app.use(
     pinoHttp({
       logger: log,
@@ -32,6 +34,11 @@ export function createApp(log: Logger = logger) {
     }),
   );
 
+  app.use(securityHeaders({ hsts: env.NODE_ENV === "production" }));
+  app.use(corsPolicy(env.ALLOWED_ORIGINS));
+  app.use(originGuard(env.ALLOWED_ORIGINS));
+
+  app.use("/auth", express.json({ limit: "10kb" }));
   app.use(express.json({ limit: "100kb" }));
   app.use(cookieParser());
 
@@ -39,10 +46,9 @@ export function createApp(log: Logger = logger) {
     res.json({ status: "ok" });
   });
   app.use("/auth", authRouter);
-  app.use("/me", requireAuth, me);
+  app.get("/me", requireAuth, me);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
-
   return app;
 }
