@@ -2,12 +2,17 @@ import { Router } from "express";
 import { loginSchema, registerSchema } from "@nutriapp/shared";
 import { requireAuth } from "../../middleware/require-auth.js";
 import { validate } from "../../middleware/validate.js";
+import type { AuthLimiters } from "./auth.limits.js";
 import { login, logout, logoutAll, refresh, register } from "./auth.controller.js";
 
-export const authRouter = Router();
+export function createAuthRouter(limiters: AuthLimiters) {
+  const router = Router();
 
-authRouter.post("/register", validate(registerSchema), register);
-authRouter.post("/login", validate(loginSchema), login);
-authRouter.post("/refresh", refresh);
-authRouter.post("/logout", logout);
-authRouter.post("/logout-all", requireAuth, logoutAll);
+  router.post("/register", limiters.registerByIp, validate(registerSchema), register);
+  router.post("/login", limiters.loginByIp, validate(loginSchema), limiters.loginByEmail, login);
+  router.post("/refresh", limiters.refreshByIp, refresh);
+  router.post("/logout", logout);
+  router.post("/logout-all", requireAuth, logoutAll);
+
+  return router;
+}

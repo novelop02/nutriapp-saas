@@ -30,6 +30,7 @@ export function corsPolicy(allowed: readonly string[]) {
     // An origin outside the list gets no CORS headers, and the browser blocks it.
     origin: (origin, callback) => callback(null, origin !== undefined && allowed.includes(origin)),
     credentials: true,
+    exposedHeaders: ["Retry-After", "X-Request-Id"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type"],
     maxAge: 600,
