@@ -9,10 +9,22 @@ import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { requireAuth } from "./middleware/require-auth.js";
 import { corsPolicy, originGuard, securityHeaders } from "./middleware/security.js";
 import { me } from "./modules/auth/auth.controller.js";
-import { authRouter } from "./modules/auth/auth.routes.js";
+import { redisRateLimitStore } from "./lib/redis.js";
+import type { RateLimitStore } from "./lib/rate-limit.js";
+import { createAuthLimiters, noLimiters } from "./modules/auth/auth.limits.js";
+import { createAuthRouter } from "./modules/auth/auth.routes.js";
+
+export type AppOptions = {
+  rateLimit?: boolean; // defaults to env.RATE_LIMIT_ENABLED
+  rateLimitStore?: RateLimitStore; // tests inject a fake
+};
 
 // The logger is injectable so tests can capture what gets written
-export function createApp(log: Logger = logger) {
+export function createApp(log: Logger = logger, opts: AppOptions = {}) {
+  const limiters =
+    (opts.rateLimit ?? env.RATE_LIMIT_ENABLED)
+      ? createAuthLimiters(opts.rateLimitStore ?? redisRateLimitStore)
+      : noLimiters;
   const app = express();
   app.disable("x-powered-by");
 
@@ -45,7 +57,7 @@ export function createApp(log: Logger = logger) {
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
   });
-  app.use("/auth", authRouter);
+  app.use("/auth", createAuthRouter(limiters));
   app.get("/me", requireAuth, me);
 
   app.use(notFoundHandler);
