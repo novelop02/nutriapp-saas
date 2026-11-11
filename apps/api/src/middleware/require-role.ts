@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { Role } from "@nutriapp/shared";
 import { AppError } from "../errors.js";
+import { SecurityEvent } from "../lib/security-events.js";
 
 export function requireRole(...allowed: Role[]): RequestHandler {
   // Misconfiguration: fail at startup, not on the first request
@@ -15,7 +16,7 @@ export function requireRole(...allowed: Role[]): RequestHandler {
     if (!allowed.includes(req.auth.role)) {
       // A security signal worth keeping: who tried what. No emails, only ids.
       req.log.warn({
-        event: "authorization_denied",
+        event: SecurityEvent.AuthorizationDenied,
         userId: req.auth.userId,
         role: req.auth.role,
         required: allowed,

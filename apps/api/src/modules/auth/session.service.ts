@@ -6,7 +6,6 @@ import { db } from "../../db/client.js";
 import { refreshTokens, users } from "../../db/schema.js";
 import { AppError } from "../../errors.js";
 import { generateRefreshToken, hashRefreshToken } from "../../lib/refresh-token.js";
-import { logger } from "../../lib/logger.js";
 
 export type SessionMeta = { userAgent: string | null; ip: string | null };
 
@@ -94,15 +93,8 @@ export async function rotateSession(
   });
 
   // Throw AFTER the transaction: throwing inside it would roll back the family revocation
-  if (result.status === "reuse") {
-    logger.warn(
-      { event: "refresh_token_reuse", familyId: result.familyId },
-      "Refresh token reuse detected, family revoked",
-    );
-    throw invalidRefreshError();
-  }
+  if (result.status === "reuse") throw new RefreshTokenReuseError(result.familyId);
   if (result.status === "invalid") throw invalidRefreshError();
-
   return { user: result.user, refreshToken: result.refreshToken };
 }
 
@@ -125,4 +117,15 @@ export async function revokeAllUserSessions(userId: string): Promise<void> {
     .update(refreshTokens)
     .set({ revokedAt: new Date() })
     .where(and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)));
+}
+
+// Same public answer as any invalid refresh token, but the controller can tell
+// a reuse apart and log it. Nothing extra reaches the client: no details.
+export class RefreshTokenReuseError extends AppError {
+  readonly familyId: string;
+
+  constructor(familyId: string) {
+    super(401, "invalid_refresh_token", "Invalid or expired session");
+    this.familyId = familyId;
+  }
 }

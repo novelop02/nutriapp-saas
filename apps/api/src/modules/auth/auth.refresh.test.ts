@@ -4,7 +4,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../../app.js";
 import { db, pool } from "../../db/client.js";
 import { refreshTokens } from "../../db/schema.js";
-import { findCookie, requireCookieValue } from "../../../test/helpers.js";
+import { findCookie, requireCookieValue, captureLogs } from "../../../test/helpers.js";
 
 const app = createApp();
 const credentials = { email: "ana@example.com", password: "safe-password-123" };
@@ -123,5 +123,36 @@ describe("POST /auth/refresh", () => {
     await db.update(refreshTokens).set({ expiresAt: new Date(Date.now() - 1000) });
 
     expect((await refreshWith(token)).status).toBe(401);
+  });
+});
+
+describe("refresh token reuse", () => {
+  it("logs the reuse with the request id and no secrets", async () => {
+    const { lines, log } = captureLogs();
+    const logged = createApp(log);
+    const loginRes = await request(logged).post("/auth/login").send(credentials);
+    const first = requireCookieValue(loginRes, "refresh_token");
+    await request(logged).post("/auth/refresh").set("Cookie", `refresh_token=${first}`);
+
+    const reuse = await request(logged)
+      .post("/auth/refresh")
+      .set("Cookie", `refresh_token=${first}`);
+
+    expect(reuse.status).toBe(401);
+    const reuseLine = lines.find((line) => line.includes('"event":"refresh_token_reuse"'));
+    expect(reuseLine).toBeDefined();
+    expect(reuseLine).toContain(reuse.get("X-Request-Id"));
+    expect(lines.join("")).not.toContain(first);
+  });
+
+  it("answers a reuse exactly like any invalid token", async () => {
+    const { token: first } = await login();
+    await refreshWith(first);
+
+    const reuse = await refreshWith(first);
+    const garbage = await refreshWith("not-a-real-token");
+
+    expect(reuse.status).toBe(garbage.status);
+    expect(reuse.body).toEqual(garbage.body);
   });
 });

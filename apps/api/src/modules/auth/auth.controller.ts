@@ -13,11 +13,13 @@ import { actorFrom } from "../../policies/actor.js";
 import {
   createSession,
   invalidRefreshError,
+  RefreshTokenReuseError,
   revokeAllUserSessions,
   revokeSessionByToken,
   rotateSession,
   type SessionMeta,
 } from "./session.service.js";
+import { SecurityEvent } from "../../lib/security-events.js";
 
 function sessionMeta(req: Request): SessionMeta {
   return {
@@ -60,6 +62,12 @@ export async function refresh(req: Request, res: Response) {
     res.set("Cache-Control", "no-store");
     res.json({ user: authUserSchema.parse(user) });
   } catch (err) {
+    if (err instanceof RefreshTokenReuseError) {
+      req.log.warn(
+        { event: SecurityEvent.RefreshTokenReuse, familyId: err.familyId },
+        "Refresh token reuse detected, family revoked",
+      );
+    }
     // A failed refresh leaves the client without a session: clear the stale cookies
     if (err instanceof AppError && err.status === 401) clearAuthCookies(res);
     throw err;
