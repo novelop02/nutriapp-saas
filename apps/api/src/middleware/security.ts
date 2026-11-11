@@ -2,6 +2,7 @@ import cors from "cors";
 import type { RequestHandler } from "express";
 import helmet from "helmet";
 import { AppError } from "../errors.js";
+import { SecurityEvent } from "../lib/security-events.js";
 
 export function securityHeaders(opts: { hsts: boolean }): RequestHandler {
   const helmetMiddleware = helmet({
@@ -49,7 +50,10 @@ export function originGuard(allowed: readonly string[]): RequestHandler {
     if (origin === undefined) return next();
     if (allowed.includes(origin)) return next();
 
-    req.log.warn({ event: "origin_rejected", origin, path: req.path }, "Origin not allowed");
+    req.log.warn(
+      { event: SecurityEvent.OriginRejected, origin, path: req.path },
+      "Origin not allowed",
+    );
     next(new AppError(403, "forbidden_origin", "Origin not allowed"));
   };
 }

@@ -1,5 +1,6 @@
 import type { Request, RequestHandler } from "express";
 import { AppError } from "../errors.js";
+import { SecurityEvent } from "../lib/security-events.js";
 
 export type HitResult = { count: number; ttlMs: number };
 
@@ -28,14 +29,17 @@ export function rateLimit(opts: LimiterOptions): RequestHandler {
       if (count > opts.limit) {
         res.set("Retry-After", String(Math.max(1, Math.ceil(ttlMs / 1000))));
         // No emails or keys in the log: the request log already has the IP
-        req.log.warn({ event: "rate_limited", limiter: opts.name, count }, "Rate limit exceeded");
+        req.log.warn(
+          { event: SecurityEvent.RateLimited, limiter: opts.name, count },
+          "Rate limit exceeded",
+        );
         return next(new AppError(429, "rate_limited", "Too many requests, try again later"));
       }
       next();
     } catch (err) {
       // Fail open: a broken store must not take login down, but it must be loud
       req.log.error(
-        { err, event: "rate_limit_store_error", limiter: opts.name },
+        { err, event: SecurityEvent.RateLimitStoreError, limiter: opts.name },
         "Rate limit store failed, allowing the request",
       );
       next();
