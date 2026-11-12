@@ -6,6 +6,7 @@ export const SecurityEvent = {
   RateLimited: "rate_limited",
   RateLimitStoreError: "rate_limit_store_error",
   RefreshTokenReuse: "refresh_token_reuse",
+  InvitationInvalid: "invitation_invalid",
 } as const;
 
 export type SecurityEventName = (typeof SecurityEvent)[keyof typeof SecurityEvent];
