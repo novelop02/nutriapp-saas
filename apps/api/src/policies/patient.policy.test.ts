@@ -68,3 +68,14 @@ describe("assertCanView / assertCanManage", () => {
     expect(err.code).toBe("forbidden");
   });
 });
+
+describe("records not linked to an account yet", () => {
+  const unlinked: PatientOwnership = { patientUserId: null, nutritionistUserId: "nutri-a" };
+
+  it("are visible only to their nutritionist", () => {
+    expect(canViewPatient(owner, unlinked)).toBe(true);
+    expect(canViewPatient(otherNutritionist, unlinked)).toBe(false);
+    expect(canViewPatient(thePatient, unlinked)).toBe(false);
+    expect(canViewPatient(admin, unlinked)).toBe(false);
+  });
+});
