@@ -4,13 +4,9 @@ import type { AuthUser, LoginInput, RegisterInput } from "@nutriapp/shared";
 import { db } from "../../db/client.js";
 import { users } from "../../db/schema.js";
 import { AppError } from "../../errors.js";
+import { isUniqueViolation } from "../../db/errors.js";
 
 const DUMMY_HASH = await argon2.hash("not-a-real-password");
-
-function isUniqueViolation(err: unknown): boolean {
-  const e = err as { code?: string; cause?: { code?: string } };
-  return e?.code === "23505" || e?.cause?.code === "23505";
-}
 
 export async function registerNutritionist(input: RegisterInput): Promise<AuthUser> {
   const passwordHash = await argon2.hash(input.password);

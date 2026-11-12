@@ -2,7 +2,7 @@ import z from "zod";
 
 export const roleSchema = z.enum(["nutritionist", "patient", "admin"]);
 
-const emailSchema = z.string().trim().toLowerCase().max(254).pipe(z.email());
+export const emailSchema = z.string().trim().toLowerCase().max(254).pipe(z.email());
 
 export const registerSchema = z.strictObject({
   email: z.string().trim().toLowerCase().max(254).pipe(z.email()),
