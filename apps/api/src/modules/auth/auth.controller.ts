@@ -28,7 +28,7 @@ function sessionMeta(req: Request): SessionMeta {
   };
 }
 
-async function startSession(req: Request, res: Response, user: AuthUser) {
+export async function startSession(req: Request, res: Response, user: AuthUser) {
   const refreshToken = await createSession(user, sessionMeta(req));
   setAuthCookies(res, await signAccessToken(user), refreshToken);
 }

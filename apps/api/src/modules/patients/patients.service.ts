@@ -56,15 +56,20 @@ export async function getPatient(actor: Actor, id: string): Promise<PatientRow> 
   return row;
 }
 
+export async function getPatientForManagement(actor: Actor, id: string): Promise<PatientRow> {
+  const row = await findPatient(id);
+  assertCanView(row !== undefined);
+  const ownership = ownershipOf(row);
+  assertCanManage(canViewPatient(actor, ownership), canManagePatient(actor, ownership));
+  return row;
+}
+
 export async function updatePatient(
   actor: Actor,
   id: string,
   input: UpdatePatientInput,
 ): Promise<PatientRow> {
-  const row = await findPatient(id);
-  assertCanView(row !== undefined);
-  const ownership = ownershipOf(row);
-  assertCanManage(canViewPatient(actor, ownership), canManagePatient(actor, ownership));
+  await getPatientForManagement(actor, id);
 
   const [updated] = await db
     .update(patients)

@@ -37,6 +37,7 @@ const envSchema = z.object({
   SMTP_HOST: z.string().min(1).default("localhost"),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   MAIL_FROM: z.string().min(1).default("NutriApp <no-reply@nutriapp.local>"),
+  APP_URL: z.url().default("http://localhost:3000"),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -14,14 +14,19 @@ import type { RateLimitStore } from "./lib/rate-limit.js";
 import { createAuthLimiters, noLimiters } from "./modules/auth/auth.limits.js";
 import { createAuthRouter } from "./modules/auth/auth.routes.js";
 import { createPatientsRouter } from "./modules/patients/patients.routes.js";
+import { smtpMailer, type Mailer } from "./lib/mailer.js";
+import { createInvitationHandlers } from "./modules/invitations/invitations.controller.js";
+import { createInvitationsRouter } from "./modules/invitations/invitations.routes.js";
 
 export type AppOptions = {
   rateLimit?: boolean; // defaults to env.RATE_LIMIT_ENABLED
   rateLimitStore?: RateLimitStore; // tests inject a fake
+  mailer?: Mailer;
 };
 
 // The logger is injectable so tests can capture what gets written
 export function createApp(log: Logger = logger, opts: AppOptions = {}) {
+  const invitations = createInvitationHandlers({ mailer: opts.mailer ?? smtpMailer });
   const limiters =
     (opts.rateLimit ?? env.RATE_LIMIT_ENABLED)
       ? createAuthLimiters(opts.rateLimitStore ?? redisRateLimitStore)
@@ -52,6 +57,7 @@ export function createApp(log: Logger = logger, opts: AppOptions = {}) {
   app.use(originGuard(env.ALLOWED_ORIGINS));
 
   app.use("/auth", express.json({ limit: "10kb" }));
+  app.use("/invitations", express.json({ limit: "10kb" }));
   app.use(express.json({ limit: "100kb" }));
   app.use(cookieParser());
 
@@ -61,7 +67,8 @@ export function createApp(log: Logger = logger, opts: AppOptions = {}) {
   app.use("/auth", createAuthRouter(limiters));
   app.get("/me", requireAuth, me);
 
-  app.use("/patients", createPatientsRouter());
+  app.use("/patients", createPatientsRouter(invitations));
+  app.use("/invitations", createInvitationsRouter(invitations));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
