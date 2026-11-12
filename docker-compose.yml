@@ -27,5 +27,12 @@ services:
       timeout: 5s
       retries: 10
 
+  mailpit:
+    image: axllent/mailpit:latest # pin a concrete version tag
+    container_name: nutritrack-mailpit
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # web UI and API
+
 volumes:
   pgdata:

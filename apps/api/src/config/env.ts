@@ -34,6 +34,9 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((value) => value === "true"),
+  SMTP_HOST: z.string().min(1).default("localhost"),
+  SMTP_PORT: z.coerce.number().int().positive().default(1025),
+  MAIL_FROM: z.string().min(1).default("NutriApp <no-reply@nutriapp.local>"),
 });
 
 const parsed = envSchema.safeParse(process.env);
