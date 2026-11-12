@@ -13,6 +13,7 @@ import { redisRateLimitStore } from "./lib/redis.js";
 import type { RateLimitStore } from "./lib/rate-limit.js";
 import { createAuthLimiters, noLimiters } from "./modules/auth/auth.limits.js";
 import { createAuthRouter } from "./modules/auth/auth.routes.js";
+import { createPatientsRouter } from "./modules/patients/patients.routes.js";
 
 export type AppOptions = {
   rateLimit?: boolean; // defaults to env.RATE_LIMIT_ENABLED
@@ -59,6 +60,8 @@ export function createApp(log: Logger = logger, opts: AppOptions = {}) {
   });
   app.use("/auth", createAuthRouter(limiters));
   app.get("/me", requireAuth, me);
+
+  app.use("/patients", createPatientsRouter());
 
   app.use(notFoundHandler);
   app.use(errorHandler);
